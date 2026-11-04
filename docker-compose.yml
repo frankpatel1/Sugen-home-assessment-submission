@@ -1,0 +1,15 @@
+services:
+  coder:
+    build: .
+    environment:
+      - OPENAI_API_KEY
+      - ANTHROPIC_API_KEY
+      - OPENAI_MODEL
+      - ANTHROPIC_MODEL
+      - HTTPS_PROXY
+      - https_proxy
+      - HTTP_PROXY
+      - http_proxy
+    volumes:
+      - ./in:/in
+      - ./out:/out
