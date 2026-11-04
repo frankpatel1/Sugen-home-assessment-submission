@@ -2,7 +2,7 @@
 
 ### 1. Baseline Evaluation: Naive BM25 Retrieval
 - **Date & Time:** 2026-11-04 11:33 UTC
-- **Commit:** Baseline benchmark commit
+- **Commit:** `b1eaabb` (Initial commit)
 - **Decision:** Evaluated direct lexical matching (BM25) between raw consultation notes and the 18,375 MMS titles.
 - **Options Considered:**
   1. Direct TF-IDF / BM25 on raw text.
@@ -14,7 +14,7 @@
 
 ### 2. External Data Source: WHO ICD-11 Official MMS Tabulation
 - **Date & Time:** 2026-11-04 11:35 UTC
-- **Commit:** Ingest WHO tabulation data
+- **Commit:** `480d488` (Enrich ICD-11 MMS codes with WHO 2026-01 taxonomic hierarchy)
 - **Decision:** Fetched and ingested the official WHO ICD-11 2026-01 Simple Tabulation package (`SimpleTabulation-ICD-11-MMS-en.zip`) from WHO CDN.
 - **Options Considered:**
   1. Use only the provided titles in `mms-2026-01.json`.
@@ -27,7 +27,7 @@
 
 ### 3. Term Dilution vs. Hierarchical Context
 - **Date & Time:** 2026-11-04 11:43 UTC
-- **Commit:** Decouple title tokens from ancestor block tokens
+- **Commit:** `480d488` (Enrich ICD-11 MMS codes with WHO 2026-01 taxonomic hierarchy)
 - **Decision:** Keep inverted lexical indexing focused on specific category titles, using ancestor blocks strictly for candidate context and LLM prompting rather than bloating BM25 document tokens.
 - **Options Considered:**
   1. Concatenate all ancestor titles into each code's BM25 document string.
@@ -39,7 +39,7 @@
 
 ### 4. Negation Stripping & Clinical Section Segmentation
 - **Date & Time:** 2026-11-04 11:46 UTC
-- **Commit:** Clinical negation and section extraction
+- **Commit:** `81fe842` (Add clinical hallmark rules, negation stripping, and BM25 candidate retriever)
 - **Decision:** Implemented clinical negation stripping (e.g., "mRDT NEG", "malaria excluded", "no cough, no vomiting") and prioritized Assessment / Diagnosis headers (`Dx:`, `Imp:`, `Assessment:`, `A:`).
 - **Options Considered:**
   1. Full NegEx dependency parser (heavyweight, dependency conflicts).
@@ -51,7 +51,7 @@
 
 ### 5. Outpatient Clinical Hallmark Signatures
 - **Date & Time:** 2026-11-04 11:47 UTC
-- **Commit:** Clinical hallmark signature matcher
+- **Commit:** `81fe842` (Add clinical hallmark rules, negation stripping, and BM25 candidate retriever)
 - **Decision:** Built curated outpatient clinical signatures covering classic presentations (boda rider malaria, tungsten flea jiggers, step-ladder typhoid, curd-like discharge candidiasis, knee OA crepitus, TLD HIV stage 1, BPH).
 - **Options Considered:**
   1. Pure BM25 without clinical rules.
@@ -63,7 +63,7 @@
 
 ### 6. Dual-Mode LLM Reranker with Proxy & Budget Failsafes
 - **Date & Time:** 2026-11-04 11:48 UTC
-- **Commit:** LLM reranker with spend tracking and proxy support
+- **Commit:** `c41239c` (Add LLM reranker with proxy compliance, budget limits, and streaming pipeline)
 - **Decision:** Created `LLMCoder` supporting `OPENAI_API_KEY` (`gpt-4o-mini`) and `ANTHROPIC_API_KEY` (`claude-3-5-haiku`) with automated fallback to the offline retriever.
 - **Options Considered:**
   1. Large LLMs (e.g. GPT-4o / Claude Opus) — would breach the $6.00 cap for 600 notes.
@@ -75,7 +75,7 @@
 
 ### 7. Containerization & Streaming Predictions
 - **Date & Time:** 2026-11-04 11:51 UTC
-- **Commit:** Docker and compose setup
+- **Commit:** `3f821d1` (Containerize coding pipeline with docker compose specification)
 - **Decision:** Provided `Dockerfile` and `docker-compose.yml` supporting `docker compose run coder /in/notes.jsonl /out/predictions.jsonl`.
 - **Options Considered:**
   1. In-memory batch accumulation before writing.
