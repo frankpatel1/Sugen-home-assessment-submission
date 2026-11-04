@@ -7,6 +7,10 @@ __pycache__/
 ._*
 .DS_Store
 
+# Archives
+*.zip
+*.tar.gz
+
 # Output files
 out/
 predictions.jsonl
@@ -20,3 +24,4 @@ scratch/
 .venv/
 venv/
 ENV/
+
