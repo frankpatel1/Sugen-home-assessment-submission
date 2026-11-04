@@ -4,12 +4,12 @@ Production-ready ICD-11 coding engine for outpatient clinical consultations, opt
 
 ---
 
-## 1. Evaluation & Scores
+## 1. Executive Summary & Scores
 
 - **Dev Set Score (`score.py`):** **74.2 / 75.0**
-  - **Top-1 Accuracy:** 58 / 60 (96.7%)
-  - **Top-3 Accuracy:** 60 / 60 (100.0%)
-  - Missing predictions: 0 | Invalid codes: 0
+  - **Top-1 Accuracy:** 58 / 60 (**96.7%**)
+  - **Top-3 Accuracy:** 60 / 60 (**100.0%**)
+  - **Missing Predictions:** 0 | **Invalid Codes:** 0 | **Duplicate IDs:** 0
 - **Estimated Hidden Set Score:** **88.0 / 100.0**
   - *Core slice (450 notes):* ~68 to 72 points (top-1 ~90%, top-3 ~96% due to ambient and typed outpatient diversity).
   - *Generalisation slice (150 notes):* ~18 to 21 points (multilingual and rare chapter cases handled by candidate retrieval + multilingual LLM reranker).
@@ -45,20 +45,98 @@ Production-ready ICD-11 coding engine for outpatient clinical consultations, opt
 
 ---
 
-## Hours Spent
+## 5. Hours Spent
 
 **Hours spent:** 3.5 hours.
 
 ---
 
-## How to Run
+## 6. Environment & System Requirements
 
-From the root directory:
+### Prerequisites
+- **Python:** 3.10+ (tested on Python 3.11).
+- **Docker & Docker Compose:** Docker Compose v2+ (required for containerized grading).
+- **Hardware Profile:** Runs entirely on CPU (8 CPUs, 16 GB RAM recommended; no GPU required).
+
+### Environment Variables
+| Variable | Description | Default |
+|---|---|---|
+| `OPENAI_API_KEY` | (Optional) API key for OpenAI model access. | None (triggers offline engine) |
+| `ANTHROPIC_API_KEY` | (Optional) API key for Anthropic model access. | None |
+| `HTTPS_PROXY` | Proxy URL for outbound API calls (e.g. `http://proxy:8080`). | Forwarded automatically |
+| `OPENAI_MODEL` | Custom OpenAI model name. | `gpt-4o-mini` |
+| `ANTHROPIC_MODEL` | Custom Anthropic model name. | `claude-3-5-haiku-20241022` |
+
+---
+
+## 7. How to Use & Run
+
+### A. Run with Docker Compose (Official Grading Command)
+From the repository root:
 ```bash
 docker compose run coder /in/notes.jsonl /out/predictions.jsonl
 ```
+- Docker will build the container image, mount `/in` (read-only) and `/out` (read-write), and output predictions.
+- Incremental streaming ensures output is continuously flushed line-by-line.
 
-Or run directly with Python:
+### B. Run Directly with Python (Local Development)
 ```bash
-python -m src.main <input_notes.jsonl> <output_predictions.jsonl>
+# 1. Run inference on input notes:
+python -m src.main in/notes.jsonl out/predictions.jsonl
+
+# 2. Score predictions with the official grader:
+python score.py --gold data/dev_notes.jsonl --pred out/predictions.jsonl --mms data/mms-2026-01.json
 ```
+
+---
+
+## 8. How to Make Changes to This Project
+
+### 1. Adding or Modifying Clinical Rules & Synonyms
+- **File:** `src/retriever.py`
+- **Clinical Rules:** `CLINICAL_RULES` is an ordered list of regex patterns and corresponding ICD-11 codes. When an explicit diagnosis header (`Dx:`, `Imp:`, `A:`) is matched, it takes precedence.
+- **Synonyms & Medical Expansions:** Add clinical abbreviations or colloquial equivalents to `SYNONYM_EXPANSIONS` in `src/retriever.py`.
+- **Negation Stripping:** Edit `clean_text_for_rules()` to update phrases that signify excluded or negative conditions (e.g. `mRDT NEG`, `malaria excluded`).
+
+### 2. Modifying the LLM Prompt or Selection Logic
+- **File:** `src/llm.py`
+- **Prompt:** Edit the system and user prompt in `predict_note()` to adjust formatting, few-shot examples, or ranking criteria.
+- **Cost Cap:** Change `budget_cap` (defaults to `$5.50` for safety under the `$6.00` limit).
+- **Concurrency:** Concurrency is configured in `src/main.py` via `ThreadPoolExecutor(max_workers=10)`.
+
+### 3. Rebuilding the Taxonomic Index
+- **File:** `src/build_index.py`
+- If updating WHO source data or adding new category mappings:
+  ```bash
+  python -m src.build_index
+  ```
+  This reads `SimpleTabulation-ICD-11-MMS-en.zip` and regenerates `data/enriched_mms.json`.
+
+---
+
+## 9. How to Track, Document & Refer to Changes
+
+To keep a rigorous, reproducible audit trail conforming to `BRIEF.md`:
+
+1. **Log Every Choice in `DECISIONS.md`:**
+   Each entry must record:
+   - Date and time.
+   - The git commit hash it describes.
+   - The decision made and alternatives considered.
+   - Concrete metrics (score delta, latency, cost).
+   - What to revisit with more time.
+2. **Commit Code Incrementally (Never Squash):**
+   ```bash
+   git add <modified_files>
+   git commit -m "Description of milestone or rule update"
+   ```
+3. **Re-evaluate After Every Change:**
+   ```bash
+   python -m src.main in/notes.jsonl out/predictions.jsonl
+   python score.py --gold data/dev_notes.jsonl --pred out/predictions.jsonl --mms data/mms-2026-01.json
+   ```
+4. **Generate the Submission Bundle:**
+   ```bash
+   git bundle create <yourname>.bundle --all
+   git bundle verify <yourname>.bundle
+   ```
