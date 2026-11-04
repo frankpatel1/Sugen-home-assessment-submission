@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# AppleDouble / macOS metadata
+._*
+.DS_Store
+
+# Output files
+out/
+predictions.jsonl
+
+# Scratch and logs
+scratch/
+.system_generated/
+*.log
+
+# Virtual environment
+.venv/
+venv/
+ENV/
