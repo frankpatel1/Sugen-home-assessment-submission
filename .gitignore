@@ -7,9 +7,10 @@ __pycache__/
 ._*
 .DS_Store
 
-# Archives
+# Archives and bundles
 *.zip
 *.tar.gz
+*.bundle
 
 # Output files
 out/
